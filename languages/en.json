@@ -1,0 +1,6 @@
+{
+  "HEART_CONTAINERS.SettingsContainerSize": "Container Size",
+  "HEART_CONTAINERS.SettingsContainerSizeHint": "Size of each heart container. Default is 10 hit points per heart.",
+  "HEART_CONTAINERS.SettingsEnableHeartContainers": "Enable Heart Containers",
+  "HEART_CONTAINERS.SettingsEnableHeartContainersHint": "Show the heart containers in the ui when you have a character assigned to your user."
+}

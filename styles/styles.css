@@ -1,0 +1,75 @@
+/* HEART CONTAINERS */
+.heart-containers.application {
+  position: fixed;
+  top: 80px;
+  left: 140px;
+  font-size: 25px;
+  pointer-events: none;
+}
+
+.heart-containers.application button {
+  pointer-events: all;
+  height: 45px;
+  width: 12px;
+  position: absolute;
+  left: -25px;
+  top: 10px;
+  background-color: #00000038;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 10px var(--color-shadow-dark);
+  color: var(--color-text-light-heading);
+  border: 1px solid var(--color-border-dark);
+  border-radius: 5px;
+  display: inline-grid;
+  place-content: center;
+}
+
+.heart-containers.application button:hover {
+  color: var(--color-text-light-highlight);
+  border: 1px solid var(--color-border-highlight-alt);
+  border-bottom: 1px solid var(--color-border-highlight);
+  box-shadow: 0 0 10px var(--color-shadow-highlight);
+}
+
+.heart-containers.application button.active .fa-solid::before {
+  content: "\f054";
+}
+
+.heart-containers.application button:not(.active) .fa-solid::before {
+  content: "\f053";
+}
+
+.heart-containers.application button:not(.active) ~ .hearts {
+  opacity: 0;
+}
+
+.heart-containers.application .hearts {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  opacity: 1;
+  transition: 250ms;
+}
+
+.heart-containers.application .heart {
+  transition: 75ms;
+  padding: 0 2px;
+  position: relative;
+  text-shadow: 1px 1px 0 black;
+}
+
+.heart-containers.application .heart.value {
+  color: rgb(189, 49, 49);
+}
+
+.heart-containers.application .heart.black {
+  color: rgb(68, 66, 66);
+}
+
+.heart-containers.application .heart.tempmax {
+  color: rgb(187, 187, 58);
+}
+
+.heart-containers.application .temp .heart {
+  color: rgb(79, 79, 233);
+}
