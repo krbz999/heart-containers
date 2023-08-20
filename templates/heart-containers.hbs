@@ -3,14 +3,14 @@
   <div class="hearts">
     {{#each hearts}}
     <span class="heart {{#if isEmpty}}empty{{/if}} {{#if isYellow}}tempmax{{else if isRed}}value{{else}}black{{/if}}">
-      <i class="fa-heart {{ifThen isEmpty 'fa-regular' 'fa-solid'}} {{#if pulse}}fa-beat{{/if}}"></i>
+      <i class="{{../icon}} {{ifThen isEmpty 'fa-regular' 'fa-solid'}} {{#if pulse}}fa-beat{{/if}}"></i>
     </span>
     {{/each}}
   </div>
   <div class="hearts temp">
     {{#each tempHearts}}
     <span class="heart">
-      <i class="fa-heart fa-solid"></i>
+      <i class="{{../icon}} fa-solid"></i>
     </span>
     {{/each}}
   </div>

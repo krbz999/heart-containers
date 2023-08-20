@@ -29,7 +29,14 @@ class HeartContainers extends Application {
 
   /** @override */
   async getData() {
-    const hp = foundry.utils.deepClone(this.actor.system.attributes.hp);
+    const hp = ["value", "max", "temp", "tempmax"].reduce((acc, p) => {
+      const value = foundry.utils.getProperty(this.actor, this[p]);
+      if ((value === undefined) && ["value", "max"].includes(p)) {
+        throw new Error("No proper path set for current and max hit points!");
+      }
+      acc[p] = value || null;
+      return acc;
+    }, {});
 
     // Whether to initially show.
     const active = game.settings.get(this.MODULE.ID, this.MODULE.SETTING.SHOWN);
@@ -51,8 +58,9 @@ class HeartContainers extends Application {
       hearts.push(data);
     }
     const tempHearts = Array(Math.ceil(hp.temp / unit)).fill(0);
+    const icon = game.settings.get(this.MODULE.ID, this.MODULE.SETTING.ICON) || "fa-heart";
 
-    return {hearts, tempHearts, active};
+    return {hearts, tempHearts, active, icon};
   }
 
   /** @override */
@@ -92,7 +100,14 @@ class HeartContainers extends Application {
       SETTING: {
         ENABLE: "enabled",
         SHOWN: "shown",
-        SIZE: "size"
+        SIZE: "size",
+        PATHS: {
+          VALUE: "value",
+          MAX: "max",
+          TEMP: "temp",
+          TEMPMAX: "tempmax"
+        },
+        ICON: "icon"
       }
     };
   };
@@ -101,9 +116,46 @@ class HeartContainers extends Application {
   }
 
   /**
-   * Register settings.
+   * Getters for data properties.
+   * @returns {string}
    */
+  get value() {
+    return game.settings.get(HeartContainers.MODULE.ID, HeartContainers.MODULE.SETTING.PATHS.VALUE);
+  }
+  get max() {
+    return game.settings.get(HeartContainers.MODULE.ID, HeartContainers.MODULE.SETTING.PATHS.MAX);
+  }
+  get temp() {
+    return game.settings.get(HeartContainers.MODULE.ID, HeartContainers.MODULE.SETTING.PATHS.TEMP);
+  }
+  get tempmax() {
+    return game.settings.get(HeartContainers.MODULE.ID, HeartContainers.MODULE.SETTING.PATHS.TEMPMAX);
+  }
+
+  /** Register settings. */
   static registerSettings() {
+    // The path to current hit points value, max, temp, and tempmax.
+    ["value", "max", "temp", "tempmax"].forEach(p => {
+      game.settings.register(HeartContainers.MODULE.ID, HeartContainers.MODULE.SETTING.PATHS[p.toUpperCase()], {
+        name: `HEART_CONTAINERS.SettingsPathName${p.capitalize()}`,
+        hint: `HEART_CONTAINERS.SettingsPathName${p.capitalize()}Hint`,
+        scope: "world",
+        config: true,
+        type: String,
+        default: `system.attributes.hp.${p}`
+      });
+    });
+
+    // Setting to change the icon.
+    game.settings.register(HeartContainers.MODULE.ID, HeartContainers.MODULE.SETTING.ICON, {
+      name: "HEART_CONTAINERS.SettingsFontAwesomeIcon",
+      hint: "HEART_CONTAINERS.SettingsFontAwesomeIconHint",
+      scope: "world",
+      config: true,
+      type: String,
+      default: "fa-heart"
+    });
+
     // Invisible setting to remember if heart containers are toggled on.
     game.settings.register(HeartContainers.MODULE.ID, HeartContainers.MODULE.SETTING.SHOWN, {
       scope: "client",
