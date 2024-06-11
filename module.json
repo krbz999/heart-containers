@@ -1,20 +1,19 @@
 {
   "id": "heart-containers",
   "title": "Heart Containers",
-  "version": "11.0.1",
+  "version": "12.0.0",
   "authors": [
     {
       "name": "Zhell",
       "url": "https://github.com/krbz999",
-      "discord": "Zhell9201",
+      "discord": "zhell9201",
       "ko-fi": "https://ko-fi.com/zhell",
       "patreon": "https://patreon.com/zhell"
     }
   ],
   "compatibility": {
-    "minimum": "11",
-    "maximum": "11",
-    "verified": "11"
+    "minimum": 12,
+    "verified": 12
   },
   "esmodules": [
     "scripts/module.mjs"
@@ -39,6 +38,6 @@
   },
   "url": "https://github.com/krbz999/heart-containers",
   "manifest": "https://github.com/krbz999/heart-containers/releases/latest/download/module.json",
-  "download": "https://github.com/krbz999/heart-containers/releases/download/v11.0.1/module.zip",
+  "download": "https://github.com/krbz999/heart-containers/releases/download/v12.0.0/module.zip",
   "description": "Show heart containers for your assigned actor."
 }
