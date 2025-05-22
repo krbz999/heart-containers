@@ -13,10 +13,10 @@
   ],
   "compatibility": {
     "minimum": 12,
-    "verified": 12
+    "verified": 13
   },
   "esmodules": [
-    "scripts/module.mjs"
+    "module.mjs"
   ],
   "styles": [
     "styles/styles.css"
@@ -30,10 +30,8 @@
   ],
   "flags": {
     "hotReload": {
-      "extensions": [],
-      "paths": [
-        "styles/styles.css"
-      ]
+      "extensions": ["css", "hbs", "json"],
+      "paths": ["styles", "templates", "languages"]
     }
   },
   "url": "https://github.com/krbz999/heart-containers",

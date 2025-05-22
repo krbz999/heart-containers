@@ -1,0 +1,6 @@
+_temp_stuff/
+*.lock
+foundry
+foundry-config.yaml
+node_modules/
+packs/

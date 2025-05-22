@@ -1,5 +1,7 @@
 <div class="heart-containers application">
-  <button data-action="toggle" {{#if active}}class="active" {{/if}}><i class="fa-solid"></i></button>
+  <button data-action="toggle" {{#if active}} class="active" {{/if}}>
+    <i class="fa-solid"></i>
+  </button>
   <div class="hearts">
     {{#each hearts}}
     <span class="heart {{#if isEmpty}}empty{{/if}} {{#if isYellow}}tempmax{{else if isRed}}value{{else}}black{{/if}}">

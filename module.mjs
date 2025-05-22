@@ -15,7 +15,7 @@ class HeartContainers extends Application {
       popOut: false,
       minimizable: false,
       id: "heart-containers-application",
-      template: "modules/heart-containers/templates/heart-containers.hbs"
+      template: "modules/heart-containers/templates/heart-containers.hbs",
     });
   }
 
@@ -53,14 +53,14 @@ class HeartContainers extends Application {
         isYellow: i > total - Math.ceil(hp.tempmax / unit),
         isEmpty,
         pulse,
-        isRed: i <= Math.ceil(Math.min(hp.value, hp.max) / unit)
+        isRed: i <= Math.ceil(Math.min(hp.value, hp.max) / unit),
       };
       hearts.push(data);
     }
     const tempHearts = Array(Math.ceil(hp.temp / unit)).fill(0);
     const icon = game.settings.get(this.MODULE.ID, this.MODULE.SETTING.ICON) || "fa-heart";
 
-    return {hearts, tempHearts, active, icon};
+    return { hearts, tempHearts, active, icon };
   }
 
   /** @override */
@@ -105,12 +105,12 @@ class HeartContainers extends Application {
           VALUE: "value",
           MAX: "max",
           TEMP: "temp",
-          TEMPMAX: "tempmax"
+          TEMPMAX: "tempmax",
         },
-        ICON: "icon"
-      }
+        ICON: "icon",
+      },
     };
-  };
+  }
   get MODULE() {
     return this.constructor.MODULE;
   }
@@ -142,7 +142,7 @@ class HeartContainers extends Application {
         scope: "world",
         config: true,
         type: String,
-        default: `system.attributes.hp.${p}`
+        default: `system.attributes.hp.${p}`,
       });
     });
 
@@ -153,7 +153,7 @@ class HeartContainers extends Application {
       scope: "world",
       config: true,
       type: String,
-      default: "fa-heart"
+      default: "fa-heart",
     });
 
     // Invisible setting to remember if heart containers are toggled on.
@@ -161,7 +161,7 @@ class HeartContainers extends Application {
       scope: "client",
       config: false,
       type: Boolean,
-      default: true
+      default: true,
     });
 
     // Client-side setting to permanently disable heart containers.
@@ -172,7 +172,7 @@ class HeartContainers extends Application {
       config: true,
       type: Boolean,
       default: true,
-      requiresReload: true
+      requiresReload: true,
     });
 
     // Amount of hit points per heart container.
@@ -182,7 +182,7 @@ class HeartContainers extends Application {
       scope: "client",
       config: true,
       type: Number,
-      default: 10
+      default: 10,
     });
   }
 }
