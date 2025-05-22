@@ -1,47 +1,142 @@
-class HeartContainers extends Application {
-  /**
-   * @constructor
-   * @param {User} user     The current user.
-   */
-  constructor(user) {
-    super();
-    this.user = user;
-  }
+const CONSTANTS = {
+  id: "heart-containers",
+  title: "Heart Containers",
+  SETTING: {
+    ENABLE: "enabled",
+    ICON: "icon",
+    SHOWN: "shown",
+    SIZE: "size",
+    PATHS: {
+      VALUE: "value",
+      MAX: "max",
+      TEMP: "temp",
+      TEMPMAX: "tempmax",
+    },
+  },
+};
 
-  /** @override */
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      resizeable: false,
-      popOut: false,
-      minimizable: false,
-      id: "heart-containers-application",
-      template: "modules/heart-containers/templates/heart-containers.hbs",
+/* -------------------------------------------------- */
+
+/**
+ * Register settings.
+ */
+function registerSettings() {
+  // The path to current hit points value, max, temp, and tempmax.
+  ["value", "max", "temp", "tempmax"].forEach(p => {
+    game.settings.register(CONSTANTS.id, CONSTANTS.SETTING.PATHS[p.toUpperCase()], {
+      name: `HEART_CONTAINERS.SettingsPathName${p.capitalize()}`,
+      hint: `HEART_CONTAINERS.SettingsPathName${p.capitalize()}Hint`,
+      scope: "world",
+      config: true,
+      type: String,
+      default: `system.attributes.hp.${p}`,
     });
-  }
+  });
+
+  // Setting to change the icon.
+  game.settings.register(CONSTANTS.id, CONSTANTS.SETTING.ICON, {
+    name: "HEART_CONTAINERS.SettingsFontAwesomeIcon",
+    hint: "HEART_CONTAINERS.SettingsFontAwesomeIconHint",
+    scope: "world",
+    config: true,
+    type: String,
+    default: "fa-heart",
+  });
+
+  // Invisible setting to remember if heart containers are toggled on.
+  game.settings.register(CONSTANTS.id, CONSTANTS.SETTING.SHOWN, {
+    scope: "client",
+    config: false,
+    type: Boolean,
+    default: true,
+    onChange: value => ui.heartContainers.element.classList.toggle("active"),
+  });
+
+  // Client-side setting to permanently disable heart containers.
+  game.settings.register(CONSTANTS.id, CONSTANTS.SETTING.ENABLE, {
+    name: "HEART_CONTAINERS.SettingsEnableHeartContainers",
+    hint: "HEART_CONTAINERS.SettingsEnableHeartContainersHint",
+    scope: "client",
+    config: true,
+    type: Boolean,
+    default: true,
+    requiresReload: true,
+  });
+
+  // Amount of hit points per heart container.
+  game.settings.register(CONSTANTS.id, CONSTANTS.SETTING.SIZE, {
+    name: "HEART_CONTAINERS.SettingsContainerSize",
+    hint: "HEART_CONTAINERS.SettingsContainerSizeHint",
+    scope: "client",
+    config: true,
+    type: new foundry.data.fields.NumberField({ min: 1, max: 100, integer: true, nullable: false }),
+    default: 10,
+  });
+}
+
+/* -------------------------------------------------- */
+
+const { HandlebarsApplicationMixin, Application } = foundry.applications.api;
+
+class HeartContainers extends HandlebarsApplicationMixin(Application) {
+  /** @inheritdoc */
+  static DEFAULT_OPTIONS = {
+    id: "heart-containers",
+    tag: "aside",
+    window: {
+      frame: false,
+      positioned: false,
+    },
+    actions: {
+      toggle: HeartContainers.#toggle,
+    },
+  };
+
+  /* -------------------------------------------------- */
+
+  /** @inheritdoc */
+  static PARTS = {
+    root: {
+      template: "modules/heart-containers/templates/heart-containers.hbs",
+      root: true,
+    },
+  };
+
+  /* -------------------------------------------------- */
 
   /**
-   * Get the character of the related user.
-   * @returns {Actor}     The user's assigned actor.
+   * Get the user's character.
+   * @returns {foundry.documents.Actor|null}   The user's assigned actor.
    */
   get actor() {
-    return this.user.character;
+    return game.user.character;
   }
 
-  /** @override */
-  async getData() {
-    const hp = ["value", "max", "temp", "tempmax"].reduce((acc, p) => {
-      const value = foundry.utils.getProperty(this.actor, this[p]);
-      if ((value === undefined) && ["value", "max"].includes(p)) {
+  /* -------------------------------------------------- */
+
+  /** @inheritdoc */
+  async _prepareContext(options) {
+    if (!this.actor) return { noActor: true };
+
+    const paths = {
+      value: game.settings.get(CONSTANTS.id, CONSTANTS.SETTING.PATHS.VALUE),
+      max: game.settings.get(CONSTANTS.id, CONSTANTS.SETTING.PATHS.MAX),
+      temp: game.settings.get(CONSTANTS.id, CONSTANTS.SETTING.PATHS.TEMP),
+      tempmax: game.settings.get(CONSTANTS.id, CONSTANTS.SETTING.PATHS.TEMPMAX),
+    };
+
+    const hp = ["value", "max", "temp", "tempmax"].reduce((acc, property) => {
+      const value = foundry.utils.getProperty(this.actor, paths[property]);
+      if ((value === undefined) && ["value", "max"].includes(property)) {
         throw new Error("No proper path set for current and max hit points!");
       }
-      acc[p] = value || null;
+      acc[property] = value || null;
       return acc;
     }, {});
 
-    // Whether to initially show.
-    const active = game.settings.get(this.MODULE.ID, this.MODULE.SETTING.SHOWN);
-    const size = game.settings.get(this.MODULE.ID, this.MODULE.SETTING.SIZE);
-    const unit = (Number.isNumeric(size) && (size > 0)) ? size : 10;
+    // Size and icon of hearts.
+    const unit = game.settings.get(CONSTANTS.id, CONSTANTS.SETTING.SIZE);
+    const icon = game.settings.get(CONSTANTS.id, CONSTANTS.SETTING.ICON) || "fa-heart";
 
     // The total number of hearts.
     const total = Math.ceil((hp.max + hp.tempmax) / unit);
@@ -49,143 +144,67 @@ class HeartContainers extends Application {
     for (let i = 1; i <= total; i++) {
       const isEmpty = i > Math.ceil(hp.value / unit);
       const pulse = !isEmpty && (i + 1 > Math.ceil(hp.value / unit));
-      const data = {
-        isYellow: i > total - Math.ceil(hp.tempmax / unit),
-        isEmpty,
-        pulse,
-        isRed: i <= Math.ceil(Math.min(hp.value, hp.max) / unit),
-      };
-      hearts.push(data);
+      const isYellow = i > total - Math.ceil(hp.tempmax / unit);
+      const isRed = i <= Math.ceil(Math.min(hp.value, hp.max) / unit);
+
+      const cssClass = [
+        "heart",
+        "icon",
+        icon,
+        isEmpty ? "fa-regular" : "fa-solid",
+        isEmpty ? "empty" : null,
+        isYellow ? "tempmax" : isRed ? "value" : "black",
+        pulse ? "fa-beat" : null,
+      ].filterJoin(" ");
+      hearts.push(cssClass);
     }
-    const tempHearts = Array(Math.ceil(hp.temp / unit)).fill(0);
-    const icon = game.settings.get(this.MODULE.ID, this.MODULE.SETTING.ICON) || "fa-heart";
+    const tempHearts = Array.fromRange(Math.ceil(hp.temp / unit)).map(() => {
+      return ["heart", "icon", "fa-solid", icon].join(" ");
+    });
 
-    return { hearts, tempHearts, active, icon };
+    return { hearts, tempHearts };
   }
 
-  /** @override */
-  render(force = false, options = {}) {
-    this.actor.apps[this.appId] = this;
-    return super.render(force, options);
+  /* -------------------------------------------------- */
+
+  /** @inheritdoc */
+  async _onFirstRender(context, options) {
+    await super._onFirstRender(context, options);
+    this.actor.apps[this.id] = this;
+    const active = game.settings.get(CONSTANTS.id, CONSTANTS.SETTING.SHOWN);
+    if (active) this.element.classList.add("active");
   }
 
-  /** @override */
-  activateListeners(html) {
-    super.activateListeners(html);
-    html[0].querySelector("[data-action='toggle']").addEventListener("click", this._onToggle.bind(this));
+  /* -------------------------------------------------- */
+
+  /** @inheritdoc */
+  _insertElement(element) {
+    const existing = document.getElementById(element.id);
+    if (existing) existing.replaceWith(element);
+    else document.getElementById("ui-left-column-2").insertAdjacentElement("afterend", element);
   }
+
+  /* -------------------------------------------------- */
+  /*   Event handlers                                   */
+  /* -------------------------------------------------- */
 
   /**
    * Handle toggling the 'active' class on the button to hide/show the hearts.
-   * @param {PointerEvent} event      The initiating click event.
+   * @this {HeartContainers}
+   * @param {PointerEvent} event    The initiating click event.
+   * @param {HTMLButtonElement} target    The element that defined the [data-action].
    */
-  _onToggle(event) {
-    game.settings.set(this.MODULE.ID, this.MODULE.SETTING.SHOWN, event.currentTarget.classList.toggle("active"));
-  }
-
-  /**
-   * Initial rendering method for this application.
-   * @returns {HeartContainers}     An instance of this application.
-   */
-  static createApplication() {
-    if (!game.settings.get(HeartContainers.MODULE.ID, HeartContainers.MODULE.SETTING.ENABLE)) return;
-    if (game.user.character) return new HeartContainers(game.user).render(true);
-  }
-
-  /** Module constants. */
-  static get MODULE() {
-    return {
-      ID: "heart-containers",
-      TITLE: "Heart Containers",
-      SETTING: {
-        ENABLE: "enabled",
-        SHOWN: "shown",
-        SIZE: "size",
-        PATHS: {
-          VALUE: "value",
-          MAX: "max",
-          TEMP: "temp",
-          TEMPMAX: "tempmax",
-        },
-        ICON: "icon",
-      },
-    };
-  }
-  get MODULE() {
-    return this.constructor.MODULE;
-  }
-
-  /**
-   * Getters for data properties.
-   * @returns {string}
-   */
-  get value() {
-    return game.settings.get(HeartContainers.MODULE.ID, HeartContainers.MODULE.SETTING.PATHS.VALUE);
-  }
-  get max() {
-    return game.settings.get(HeartContainers.MODULE.ID, HeartContainers.MODULE.SETTING.PATHS.MAX);
-  }
-  get temp() {
-    return game.settings.get(HeartContainers.MODULE.ID, HeartContainers.MODULE.SETTING.PATHS.TEMP);
-  }
-  get tempmax() {
-    return game.settings.get(HeartContainers.MODULE.ID, HeartContainers.MODULE.SETTING.PATHS.TEMPMAX);
-  }
-
-  /** Register settings. */
-  static registerSettings() {
-    // The path to current hit points value, max, temp, and tempmax.
-    ["value", "max", "temp", "tempmax"].forEach(p => {
-      game.settings.register(HeartContainers.MODULE.ID, HeartContainers.MODULE.SETTING.PATHS[p.toUpperCase()], {
-        name: `HEART_CONTAINERS.SettingsPathName${p.capitalize()}`,
-        hint: `HEART_CONTAINERS.SettingsPathName${p.capitalize()}Hint`,
-        scope: "world",
-        config: true,
-        type: String,
-        default: `system.attributes.hp.${p}`,
-      });
-    });
-
-    // Setting to change the icon.
-    game.settings.register(HeartContainers.MODULE.ID, HeartContainers.MODULE.SETTING.ICON, {
-      name: "HEART_CONTAINERS.SettingsFontAwesomeIcon",
-      hint: "HEART_CONTAINERS.SettingsFontAwesomeIconHint",
-      scope: "world",
-      config: true,
-      type: String,
-      default: "fa-heart",
-    });
-
-    // Invisible setting to remember if heart containers are toggled on.
-    game.settings.register(HeartContainers.MODULE.ID, HeartContainers.MODULE.SETTING.SHOWN, {
-      scope: "client",
-      config: false,
-      type: Boolean,
-      default: true,
-    });
-
-    // Client-side setting to permanently disable heart containers.
-    game.settings.register(HeartContainers.MODULE.ID, HeartContainers.MODULE.SETTING.ENABLE, {
-      name: "HEART_CONTAINERS.SettingsEnableHeartContainers",
-      hint: "HEART_CONTAINERS.SettingsEnableHeartContainersHint",
-      scope: "client",
-      config: true,
-      type: Boolean,
-      default: true,
-      requiresReload: true,
-    });
-
-    // Amount of hit points per heart container.
-    game.settings.register(HeartContainers.MODULE.ID, HeartContainers.MODULE.SETTING.SIZE, {
-      name: "HEART_CONTAINERS.SettingsContainerSize",
-      hint: "HEART_CONTAINERS.SettingsContainerSizeHint",
-      scope: "client",
-      config: true,
-      type: Number,
-      default: 10,
-    });
+  static #toggle(event, target) {
+    const current = game.settings.get(CONSTANTS.id, CONSTANTS.SETTING.SHOWN);
+    game.settings.set(CONSTANTS.id, CONSTANTS.SETTING.SHOWN, !current);
   }
 }
 
-Hooks.once("init", HeartContainers.registerSettings);
-Hooks.once("ready", HeartContainers.createApplication);
+Hooks.once("init", () => {
+  registerSettings();
+  CONFIG.ui.heartContainers = HeartContainers;
+});
+Hooks.once("ready", () => {
+  if (!game.settings.get(CONSTANTS.id, CONSTANTS.SETTING.ENABLE)) return;
+  ui.heartContainers.render({ force: true });
+});

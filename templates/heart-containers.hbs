@@ -1,19 +1,16 @@
-<div class="heart-containers application">
-  <button data-action="toggle" {{#if active}} class="active" {{/if}}>
-    <i class="fa-solid"></i>
-  </button>
+<div id="heart-containers-application">
+  {{#if noActor}}
+  {{else}}
+  <button data-action="toggle" class="icon"></button>
   <div class="hearts">
     {{#each hearts}}
-    <span class="heart {{#if isEmpty}}empty{{/if}} {{#if isYellow}}tempmax{{else if isRed}}value{{else}}black{{/if}}">
-      <i class="{{../icon}} {{ifThen isEmpty 'fa-regular' 'fa-solid'}} {{#if pulse}}fa-beat{{/if}}"></i>
-    </span>
+    <span class="{{this}}"></span>
     {{/each}}
   </div>
   <div class="hearts temp">
     {{#each tempHearts}}
-    <span class="heart">
-      <i class="{{../icon}} fa-solid"></i>
-    </span>
+    <span class="{{this}}"></span>
     {{/each}}
   </div>
+  {{/if}}
 </div>
